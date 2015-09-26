@@ -9,10 +9,12 @@ import java.util.Collection;
 import java.util.concurrent.atomic.AtomicInteger;
 
 
-@Tool({
-        @Option("providerId"),
-        @Option("externalArtistId")
-})
+@Tool(name = "testTool",
+        value =
+                {
+                        @Option("providerId"),
+                        @Option("externalArtistId")
+                })
 public class TestTool {
 
     AtomicInteger totalProcessed = new AtomicInteger();
@@ -24,10 +26,10 @@ public class TestTool {
 
     @Data(partitioned = true)
     public Collection<Integer> init(@Value("providerId") String providerId,
-                       @Value("externalArtistId") String artistId){
+                                    @Value("externalArtistId") String artistId) {
         System.out.println(providerId);
         System.out.println(artistId);
-        return Arrays.asList(1,2,3,4);
+        return Arrays.asList(1, 2, 3, 4);
     }
 
     @Execution

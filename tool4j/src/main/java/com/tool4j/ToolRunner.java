@@ -1,5 +1,8 @@
 package com.tool4j;
 
+import com.tool4j.processors.DataProcessor;
+import com.tool4j.processors.ExecutionProcessor;
+import com.tool4j.processors.ToolProcessor;
 import org.apache.commons.cli.BasicParser;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.CommandLineParser;
@@ -24,10 +27,24 @@ public class ToolRunner {
     private static final Logger LOGGER = LoggerFactory.getLogger(Tool.class);
     CommandLineParser parser = new BasicParser();
 
-    public void run(final Object tool,String[] args) throws ParseException, InvocationTargetException, IllegalAccessException {
-        Options options = createOptions(tool.getClass().getAnnotation(Tool.class));
-        Data data = findData(tool);
-        if (data.partitioned()) {
+    public void run(final Object tool, String[] args) throws ParseException, InvocationTargetException, IllegalAccessException {
+        ToolProcessor toolProcessor = new ToolProcessor(tool);
+        DataProcessor dataProcessor = new DataProcessor(tool);
+        ExecutionProcessor execution = new ExecutionProcessor(tool);
+        CommandLine parse = parse(tool, args, toolProcessor, dataProcessor);
+
+        String name = toolProcessor.name();
+        Object data = dataProcessor.getData(parse);
+
+        LOGGER.info("{} has started", name);
+        execution.run(parse, data, dataProcessor.raw().partitioned());
+        LOGGER.info("{} has finished", name);
+
+    }
+
+    private CommandLine parse(Object tool, String[] args, ToolProcessor toolProcessor, DataProcessor dataProcessor) {
+        Options options = toolProcessor.options();
+        if (dataProcessor.raw().partitioned()) {
             options.addOption(OptionBuilder
                     .withArgName("number of threads")
                     .withLongOpt("threadsNumber")
@@ -36,131 +53,17 @@ public class ToolRunner {
                     .isRequired(true)
                     .create());
         }
-        CommandLine parse = parse(tool, options, args);
-        Object result = initMethods(tool, parse);
-
-        ExecutorService executor = Executors.newFixedThreadPool(Integer.parseInt(parse.getOptionValue("threadsNumber", "1")));
-        final Method method = findExecution(tool);
 
 
-            if (data.partitioned()) {
-                Collection<Object> results = (Collection)result;
-                for (Object o : results) {
-                    final Object[] params = new Object[method.getParameterTypes().length];
-                    int i = 0;
-                    for (Annotation[] aClass : method.getParameterAnnotations()) {
-                        if (aClass[0] instanceof Value) {
-                            Value optionValue = (Value) aClass[0];
-                            String valueName = optionValue.value();
-                            params[i] = parse.getParsedOptionValue(valueName);
-                        } else if (aClass[0] instanceof Data) {
-                            params[i] = o;
-                        }
-                        i++;
-                    }
-                    executor.execute(new Runnable() {
-
-                        public void run() {
-                            try {
-                                method.invoke(tool, params);
-                            } catch (IllegalAccessException e) {
-                                e.printStackTrace();
-                            } catch (InvocationTargetException e) {
-                                e.printStackTrace();
-                            }
-                        }
-                    });
-                }
-
-            } else {
-                final Object[] params = new Object[method.getParameterTypes().length];
-                int i = 0;
-                for (Annotation[] aClass : method.getParameterAnnotations()) {
-                    if (aClass[0] instanceof Value) {
-                        Value optionValue = (Value) aClass[0];
-                        String valueName = optionValue.value();
-                        params[i] = parse.getParsedOptionValue(valueName);
-                    } else if (aClass[0] instanceof Data) {
-                        params[i] = result;
-                    }
-                    i++;
-                }
-                executor.execute(new Runnable() {
-                    @Override
-                    public void run() {
-                        try {
-                            method.invoke(tool, params);
-                        } catch (IllegalAccessException e) {
-                            e.printStackTrace();
-                        } catch (InvocationTargetException e) {
-                            e.printStackTrace();
-                        }
-                    }
-                });
-            }
-
-        final Method progress = findProgress(tool);
-        executor.shutdown();
-        while (!executor.isTerminated()) {
-            try {
-                LOGGER.info(progress.invoke(tool).toString());
-                executor.awaitTermination(5000, MILLISECONDS);
-            } catch (InterruptedException e) {
-                LOGGER.error("Error while waiting for completion:", e);
-            }
-        }
-
-    }
-
-    private CommandLine parse(Object tool, org.apache.commons.cli.Options apacheOptions, String[] args) {
         try {
-            return parser.parse(apacheOptions, args);
+            return parser.parse(options, args);
         } catch (ParseException ex) {
             HelpFormatter formatter = new HelpFormatter();
-            formatter.printHelp(tool.getClass().getSimpleName(), apacheOptions, true);
+            formatter.printHelp(tool.getClass().getSimpleName(), options, true);
             System.exit(-1);
             return null;
         }
     }
-
-    private Data findData(Object tool) {
-        Data data = null;
-        int count = 0;
-        for (Method method : tool.getClass().getDeclaredMethods()) {
-            data = method.getAnnotation(Data.class);
-            if (data != null) {
-                count++;
-            }
-        }
-        if (count > 1) {
-            throw new RuntimeException("Just one data alowed");
-        }
-        return data;
-    }
-
-    private Object initMethods(Object tool, CommandLine parse) throws ParseException, InvocationTargetException, IllegalAccessException {
-        for (Method method : tool.getClass().getDeclaredMethods()) {
-            Data data = method.getAnnotation(Data.class);
-            if (data != null) {
-                Class c = method.getReturnType();
-                if (c != Collection.class && data.partitioned()){
-                    throw new RuntimeException();
-                }
-
-                Object[] params = new Object[method.getParameterTypes().length];
-                int i = 0;
-                for (Annotation[] aClass : method.getParameterAnnotations()) {
-                    Value optionValue = (Value) aClass[0];
-                    String valueName = optionValue.value();
-                    params[i] = parse.getParsedOptionValue(valueName);
-                    i++;
-                }
-                return method.invoke(tool, params);
-            }
-        }
-        return null;
-    }
-
 
     private Method findExecution(Object tool) {
         for (Method method : tool.getClass().getDeclaredMethods()) {
