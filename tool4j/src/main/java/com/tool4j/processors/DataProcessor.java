@@ -61,7 +61,6 @@ public class DataProcessor implements AnnotationProcessor<Data> {
         return result;
     }
 
-    @Override
     public Data raw() {
         return data;
     }

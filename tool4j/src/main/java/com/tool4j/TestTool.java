@@ -43,10 +43,10 @@ public class TestTool {
             e.printStackTrace();
         }
     }
-
-    @Progress
-    public String progress() {
-        return "Progress " + totalProcessed.get();
-    }
+//
+//    @Progress
+//    public String progress() {
+//        return "Progress " + totalProcessed.get();
+//    }
 
 }

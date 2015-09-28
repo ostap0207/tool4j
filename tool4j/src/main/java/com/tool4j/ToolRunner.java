@@ -31,6 +31,7 @@ public class ToolRunner {
         ToolProcessor toolProcessor = new ToolProcessor(tool);
         DataProcessor dataProcessor = new DataProcessor(tool);
         ExecutionProcessor execution = new ExecutionProcessor(tool);
+
         CommandLine parse = parse(tool, args, toolProcessor, dataProcessor);
 
         String name = toolProcessor.name();
@@ -63,47 +64,6 @@ public class ToolRunner {
             System.exit(-1);
             return null;
         }
-    }
-
-    private Method findExecution(Object tool) {
-        for (Method method : tool.getClass().getDeclaredMethods()) {
-            Execution execution = method.getAnnotation(Execution.class);
-            if (execution != null) {
-                return method;
-            }
-        }
-        return null;
-    }
-
-
-    private Method findProgress(Object tool) {
-        for (Method method : tool.getClass().getDeclaredMethods()) {
-            Progress execution = method.getAnnotation(Progress.class);
-            if (execution != null) {
-                return method;
-            }
-        }
-        return null;
-    }
-
-    private Options createOptions(Tool tool) {
-        org.apache.commons.cli.Options apacheOptions = new org.apache.commons.cli.Options();
-        if (tool != null) {
-            Option[] optionArray = tool.value();
-            if (optionArray.length > 0) {
-                for (Option option : optionArray) {
-                    apacheOptions.addOption(OptionBuilder
-                            .withArgName(option.value())
-                            .withLongOpt(option.value())
-                            .withType(option.type())
-                            .hasArg(option.hasArg())
-                            .isRequired(option.isRequired())
-                            .create());
-                }
-
-            }
-        }
-        return apacheOptions;
     }
 
 }

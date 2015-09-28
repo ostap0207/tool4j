@@ -39,7 +39,6 @@ public class ToolProcessor implements AnnotationProcessor<Tool> {
         return tool.name();
     }
 
-    @Override
     public Tool raw() {
         return tool;
     }
