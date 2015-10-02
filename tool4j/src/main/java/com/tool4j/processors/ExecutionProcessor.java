@@ -15,6 +15,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import static java.util.concurrent.Executors.newFixedThreadPool;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
 public class ExecutionProcessor implements AnnotationProcessor<Execution>{
@@ -45,7 +46,7 @@ public class ExecutionProcessor implements AnnotationProcessor<Execution>{
     public void run(CommandLine parse, Object data, boolean partitioned) throws ParseException, InvocationTargetException, IllegalAccessException {
         final AtomicInteger counter = new AtomicInteger();
         int total = 1;
-        ExecutorService executor = Executors.newFixedThreadPool(Integer.parseInt(parse.getOptionValue("threadsNumber", "1")));
+        ExecutorService executor = newFixedThreadPool(Integer.parseInt(parse.getOptionValue("threadsNumber", "1")));
 
         if (partitioned) {
             Collection<Object> results = (Collection) data;

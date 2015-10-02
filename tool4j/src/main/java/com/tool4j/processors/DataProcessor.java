@@ -56,7 +56,7 @@ public class DataProcessor implements AnnotationProcessor<Data> {
             }
         }
         if (count > 1) {
-            throw new RuntimeException("Just one data allowed");
+            throw new RuntimeException("Just one data is allowed");
         }
         return result;
     }
