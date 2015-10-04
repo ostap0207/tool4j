@@ -13,20 +13,24 @@ import org.apache.commons.cli.ParseException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.lang.annotation.Annotation;
 import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
-import java.util.Collection;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 
-import static java.util.concurrent.TimeUnit.MILLISECONDS;
-
+/**
+ * Class that runs all the tools and manages data exchange
+ */
 public class ToolRunner {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(Tool.class);
     CommandLineParser parser = new BasicParser();
 
+    /**
+     * Start the tool execution
+     * @param tool create and initialized tool object
+     * @param args command line input params
+     * @throws ParseException
+     * @throws InvocationTargetException
+     * @throws IllegalAccessException
+     */
     public void run(final Object tool, String[] args) throws ParseException, InvocationTargetException, IllegalAccessException {
         ToolProcessor toolProcessor = new ToolProcessor(tool);
         DataProcessor dataProcessor = new DataProcessor(tool);

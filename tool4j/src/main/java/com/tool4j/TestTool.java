@@ -9,26 +9,26 @@ import java.util.Collection;
 import java.util.concurrent.atomic.AtomicInteger;
 
 
-@Tool(name = "testTool", value ={@Option("providerId"), @Option("externalArtistId")})
+@Tool(name = "testTool", value ={@Option("name"), @Option("card")})
 public class TestTool {
 
     AtomicInteger totalProcessed = new AtomicInteger();
 
     public static void main(String[] args) throws ParseException, IllegalAccessException, InvocationTargetException {
         ToolRunner tool = new ToolRunner();
-        tool.run(new TestTool(), new String[]{"--providerId", "1", "--externalArtistId", "2"});
+        tool.run(new TestTool(), new String[]{"--name", "name", "--card", "2123 1242 1241 1241"});
     }
 
     @Data
-    public Collection<Integer> init(@Value("providerId") String providerId,
-                                    @Value("externalArtistId") String artistId) {
-        System.out.println(providerId);
-        System.out.println(artistId);
+    public Collection<Integer> init(@Value("name") String name,
+                                    @Value("card") String card) {
+        System.out.println(name);
+        System.out.println(card);
         return Arrays.asList(1, 2, 3, 4);
     }
 
     @Execution
-    public void run(@Value("providerId") String providerId, @Data Collection<Integer> data) {
+    public void run(@Value("name") String name, @Data Collection<Integer> data) {
         try {
             System.out.println("Started task " + data);
             Thread.sleep(5000 * data.iterator().next());
